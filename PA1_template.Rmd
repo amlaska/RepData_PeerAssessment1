@@ -1,17 +1,24 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research Peer Assignment 1"
+author: "Ann Laska"
+date: "March 19, 2017"
+output: html_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
 ## Load libraries
 library(lattice)
 library(knitr)
+library(rmarkdown)
 
 ## Load activity.csv into a variable
 act_org<-read.csv("activity.csv", header = TRUE)
+```
 
-## Find sum by day without NA values
+###Find sum by day without NA values and plot in a histogram
+```{r sumbyday, include=TRUE}
 sum_nona<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = sum)
 
 ## Apply friendly column names
@@ -19,24 +26,32 @@ colnames(sum_nona)<-c("Date", "SumSteps")
 
 ## Create a histogram of steps per day
 hist(sum_nona$SumSteps, xlab = "Sum of Steps", main = "Histogram of Steps")
+```
 
-## Find mean by day without NA values
+```{r mean_median, include = TRUE}
+###Find mean by day without NA values
 mean_nona<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = mean)
 
-## Apply friendly column names
+###Apply friendly column names
 colnames(mean_nona)<-c("Date", "MeanSteps")
 
-## Find median by day without NA values
+###Find median by day without NA values
 med_nona<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = median)
 
 ## Apply friendly column names
 colnames(med_nona)<-c("Date", "MedianSteps")
-
-## Print mean and median by day
+```
+###Print median by day
+```{r med_day, include = TRUE}
 print(med_nona)
+```
+###Print mean by day
+```{r mean_day, include = TRUE}
 print(mean_nona)
+```
 
-## Find average by day and interval without NA
+###Find average by day and interval without NA and plot in a time series line graph
+```{r avg_int, include=TRUE}
 avg_nona<-aggregate(act_org$steps, by = list(act_org$interval), na.rm = TRUE, FUN = mean)
 
 ## Apply friendly column names
@@ -44,10 +59,14 @@ colnames(avg_nona)<-c("Interval", "AvgSteps")
 
 ## Plot average steps by day/interval
 plot(avg_nona$Interval, avg_nona$AvgSteps, type = "l", main = "Avg Steps/Day by Interval", xlab = "Interval", ylab = "Avg Steps")
+```
 
-## Find number of NA values in steps
+###Find number of NA values in steps
+```{r num_na, include=TRUE}
 print(sum(is.na(act_org$steps)))
+```
 
+```{r imputing, include=TRUE}
 ## Use the mean interval to fill in the NA values 
 
 ## Set the loop variable
@@ -69,9 +88,11 @@ for (i in 1:17568)
     }
     i<-i+1
 }
+```
 
-
-## Repeat with imputed values
+##Repeat with imputed values
+###Find sum by day and plot in a histogram
+```{r sumbyday1, include = TRUE}
 ## Find sum by day
 sum_nona1<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = sum)
 
@@ -80,27 +101,48 @@ colnames(sum_nona1)<-c("Date", "SumSteps")
 
 ## Create a histogram of steps per day
 hist(sum_nona1$SumSteps, xlab = "Sum of Steps", main = "Histogram of Steps")
-
-## Find mean by day without NA values
+```
+```{r mean_med1, include=TRUE}
+###Find mean by day
 mean_nona1<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = mean)
 
-## Apply friendly column names
+###Apply friendly column names
 colnames(mean_nona1)<-c("Date", "MeanSteps")
 
-## Find median by day without NA values
+###Find median by day
 med_nona1<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = median)
 
-## Apply friendly column names
+###Apply friendly column names
 colnames(med_nona1)<-c("Date", "MedianSteps")
+```
+I chose to use the average per interval to fill in the NA values. Couple of issues:
 
-## Print mean and median by day
+* I did not distiguish the average on a weekday vs. a weekend for each interval
+
+* I did not throw out any outliers, which could skew the values
+
+The end result is a cleaner bell curve on the histogram because the missing values were normalized by taking the average.
+###Print median by day
+```{r med_day1, include = TRUE}
 print(med_nona1)
+```
+###Print mean by day
+```{r mean_day1, include = TRUE}
 print(mean_nona1)
+```
 
+###Plot activity weekends vs. weekdays
+```{r plot_days, include=TRUE}
 ## Add factor for Weekday vs. Weekend
 weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
 act_org$date<-as.Date(act_org$date)
 act_org$wDay <- factor((weekdays(act_org$date) %in% weekdays1), levels=c(FALSE, TRUE), labels=c('weekend', 'weekday')) 
-
+## Get the average steps
+avg_interval_wd<-aggregate(act_org$steps, by = list(act_org$interval, act_org$wDay), FUN = mean)
+## Apply friendly names
+colnames(avg_interval_wd)<-c("interval", "wDay", "steps")
 ## Make the panel plot
-xyplot(act_org$steps~act_org$interval|act_org$wDay,type="l",group=act_org$wDay, layout=c(1,2), xlab = "Interval", ylab = "# of Steps")
+xyplot(avg_interval_wd$steps~avg_interval_wd$interval|avg_interval_wd$wDay,type="l",group=avg_interval_wd$wDay, layout=c(1,2), xlab = "Interval", ylab = "# of Steps")
+```
+
+I would've expected the average on the weekend to be higher. However, the spike in the morning doesn't surprise me much since that's when a lot of people choose to work out.
