@@ -4,22 +4,103 @@ output:
   html_document:
     keep_md: true
 ---
+## Load libraries
+library(lattice)
+library(knitr)
+
+## Load activity.csv into a variable
+act_org<-read.csv("activity.csv", header = TRUE)
+
+## Find sum by day without NA values
+sum_nona<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = sum)
+
+## Apply friendly column names
+colnames(sum_nona)<-c("Date", "SumSteps")
+
+## Create a histogram of steps per day
+hist(sum_nona$SumSteps, xlab = "Sum of Steps", main = "Histogram of Steps")
+
+## Find mean by day without NA values
+mean_nona<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = mean)
+
+## Apply friendly column names
+colnames(mean_nona)<-c("Date", "MeanSteps")
+
+## Find median by day without NA values
+med_nona<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = median)
+
+## Apply friendly column names
+colnames(med_nona)<-c("Date", "MedianSteps")
+
+## Print mean and median by day
+print(med_nona)
+print(mean_nona)
+
+## Find average by day and interval without NA
+avg_nona<-aggregate(act_org$steps, by = list(act_org$interval), na.rm = TRUE, FUN = mean)
+
+## Apply friendly column names
+colnames(avg_nona)<-c("Interval", "AvgSteps")
+
+## Plot average steps by day/interval
+plot(avg_nona$Interval, avg_nona$AvgSteps, type = "l", main = "Avg Steps/Day by Interval", xlab = "Interval", ylab = "Avg Steps")
+
+## Find number of NA values in steps
+print(sum(is.na(act_org$steps)))
+
+## Use the mean interval to fill in the NA values 
+
+## Set the loop variable
+i<-1
+z<-0
+for (i in 1:17568)
+  {
+    j<-1
+    if(is.na(act_org[i,1]))
+    {
+      for (j in 1:288)
+      {
+        if(act_org[i,3]==avg_nona[j,1])
+        {
+          act_org[i,1]<-avg_nona[j,2]
+        }
+      }
+      
+    }
+    i<-i+1
+}
 
 
-## Loading and preprocessing the data
+## Repeat with imputed values
+## Find sum by day
+sum_nona1<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = sum)
 
+## Apply friendly column names
+colnames(sum_nona1)<-c("Date", "SumSteps")
 
+## Create a histogram of steps per day
+hist(sum_nona1$SumSteps, xlab = "Sum of Steps", main = "Histogram of Steps")
 
-## What is mean total number of steps taken per day?
+## Find mean by day without NA values
+mean_nona1<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = mean)
 
+## Apply friendly column names
+colnames(mean_nona1)<-c("Date", "MeanSteps")
 
+## Find median by day without NA values
+med_nona1<-aggregate(act_org$steps, by = list(act_org$date), na.rm = TRUE, FUN = median)
 
-## What is the average daily activity pattern?
+## Apply friendly column names
+colnames(med_nona1)<-c("Date", "MedianSteps")
 
+## Print mean and median by day
+print(med_nona1)
+print(mean_nona1)
 
+## Add factor for Weekday vs. Weekend
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+act_org$date<-as.Date(act_org$date)
+act_org$wDay <- factor((weekdays(act_org$date) %in% weekdays1), levels=c(FALSE, TRUE), labels=c('weekend', 'weekday')) 
 
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+## Make the panel plot
+xyplot(act_org$steps~act_org$interval|act_org$wDay,type="l",group=act_org$wDay, layout=c(1,2), xlab = "Interval", ylab = "# of Steps")
